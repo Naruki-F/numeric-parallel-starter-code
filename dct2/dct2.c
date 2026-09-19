@@ -90,7 +90,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include <time.h>
 
 // As documented for DCT2 in Wikipedia
 //
@@ -117,34 +117,38 @@
 void dct(double macroblock[8][8], double dct2[8][8])
 {
    int u,v,x,y;
+#ifdef TRACE_CSV
    FILE * fp = fopen("dct2.csv", "w");
-	
+#endif
+
     for (v=0; v<8; v++)
     {
         for (u=0; u<8; u++)
         {
             double Cu, Cv, z = 0.0;
-
             COEFFS(Cu,Cv,u,v);
 
             for (y=0; y<8; y++)
             for (x=0; x<8; x++)
             {
                 double s, q;
-
                 s = macroblock[x][y];
-
-                q = s * cos((double)(2*x+1) * (double)u * M_PI/16.0) *
-                        cos((double)(2*y+1) * (double)v * M_PI/16.0);
+                q = s * cos((double)(2*x+1) * (double)u * M_PI/16.0) * cos((double)(2*y+1) * (double)v * M_PI/16.0);
                 z += q;
             }
 
             dct2[v][u] = 0.25 * Cu * Cv * z;
+#ifdef TRACE_CSV
             fprintf(fp, "\n %lf", dct2[v][u]);
+#endif
         }
+#ifdef TRACE_CSV
         fprintf(fp, "\n");
-
+#endif
     }
+#ifdef TRACE_CSV
+    fclose(fp);
+#endif
 }
 
 
@@ -153,7 +157,9 @@ void dct(double macroblock[8][8], double dct2[8][8])
 void idct(double dct2[8][8], double idct2[8][8])
 {
     int u,v,x,y;
+#ifdef TRACE_CSV
     FILE * fp = fopen("idct2.csv", "w");
+#endif
 
     for (y=0; y<8; y++)
     {
@@ -166,22 +172,28 @@ void idct(double dct2[8][8], double idct2[8][8])
             {
                 double S, q;
                 double Cu, Cv;
-		
+
                 COEFFS(Cu,Cv,u,v);
                 S = dct2[v][u];
 
-                q = Cu * Cv * S *
-                    cos((double)(2*x+1) * (double)u * M_PI/16.0) *
-                    cos((double)(2*y+1) * (double)v * M_PI/16.0);
+                q = Cu * Cv * S * cos((double)(2*x+1) * (double)u * M_PI/16.0) * cos((double)(2*y+1) * (double)v * M_PI/16.0);
 
-                    z += q;
+                z += q;
             }
+
             z /= 4.0;
             idct2[x][y] = z;
+#ifdef TRACE_CSV
             fprintf(fp, "\n %lf", idct2[x][y]);
+#endif
         }
+#ifdef TRACE_CSV
         fprintf(fp, "\n");
+#endif
     }
+#ifdef TRACE_CSV
+    fclose(fp);
+#endif
 }
 
 
@@ -196,6 +208,8 @@ void idct(double dct2[8][8], double idct2[8][8])
 //
 // This formulation is however much easier to understand.
 //
+
+#define ITERATIONS 19200 // 1280x960/(8x8) = 19200 macroblocks per frame
 int main()
 {
     double Macroblock[8][8] = { {101, 100,  94, 102,  97,  91,  88,  83},
@@ -209,9 +223,28 @@ int main()
     double dct2[8][8];
     double idct2[8][8];
 
-    // Trace output I added to these dump into a CSV file
-    dct(Macroblock, dct2);
-    idct(dct2, idct2);
+    struct timespec start, stop;
+    double elapsed, fps;
+    int i;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    for (i = 0; i < ITERATIONS; i++)
+    {
+        dct(Macroblock, dct2);
+        idct(dct2, idct2);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &stop);
+
+    elapsed = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / 1.0e9;
+    fps = 1.0 / elapsed;
+
+    printf("Iterations (macroblocks): %d\n", ITERATIONS);
+    printf("Elapsed time for 1 frame: %.6lf sec\n", elapsed);
+    printf("Frame rate: %.3lf fps\n", fps);
+    printf("Verify dct2[0][0] = %.4lf (expect 695.25)\n", dct2[0][0]);
+    printf("Verify idct2[0][0] = %.4lf (expect 101.00)\n", idct2[0][0]);
 
     exit(0);
 }

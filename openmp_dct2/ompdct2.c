@@ -97,6 +97,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 
 // As documented for DCT2 in Wikipedia
@@ -212,9 +213,13 @@ void idct(double dct2[8][8], double idct2[8][8])
 //
 #define MAX_ITERATIONS (3)
 
-int main()
+int main(int argc, char *argv[])
 {
-    int thread_count=4;
+    int thread_count = 4;
+
+    if (argc >= 2)
+        sscanf(argv[1], "%d", &thread_count);
+
     double Macroblock[8][8] = { {101, 100,  94, 102,  97,  91,  88,  83},
                                 {101,  99,  98, 103,  93,  93, 107, 110},
                                 { 98,  97,  97,  97, 103, 101,  94, 100},
@@ -226,8 +231,12 @@ int main()
     double dct2[8][8];
     double idct2[8][8];
 
+struct timespec start, stop;
+double elapsed, fps;
 
-#pragma omp parallel for num_threads(thread_count)
+clock_gettime(CLOCK_MONOTONIC, &start);
+
+#pragma omp parallel for num_threads(thread_count) private(dct2, idct2)
     for(int frame_idx=0; frame_idx < MAX_ITERATIONS; frame_idx++)
     {
         // Emulate a 1280x960 resolutioon image with one color channel - gray
@@ -249,5 +258,14 @@ int main()
         }
     }
 
+clock_gettime(CLOCK_MONOTONIC, &stop);
+elapsed = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / 1.0e9;
+fps = (double)MAX_ITERATIONS / elapsed;
+
+printf("Threads: %d\n", thread_count);
+printf("Frames: %d\n", MAX_ITERATIONS);
+printf("Elapsed: %.6lf sec\n", elapsed);
+printf("Per frame: %.6lf sec\n", elapsed / MAX_ITERATIONS);
+printf("Frame rate: %.3lf fps\n", fps);
     exit(0);
 }

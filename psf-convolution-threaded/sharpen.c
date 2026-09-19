@@ -15,8 +15,8 @@
 //#define IMG_HEIGHT (300)
 //#define IMG_WIDTH (400)
 
-#define IMG_HEIGHT (3000)
-#define IMG_WIDTH (4000)
+#define IMG_HEIGHT (960)
+#define IMG_WIDTH (1280)
 
 #define HEADER_SIZE (40)
 
@@ -54,8 +54,7 @@ FLOAT PSF[9] = {-K/F, -K/F, -K/F, -K/F, K+1.0, -K/F, -K/F, -K/F, -K/F};
 
 int main(int argc, char *argv[])
 {
-    int fdin, fdout, bytesRead=0, bytesWritten=0, bytesLeft, i, j, iter, rc, pixel, readcnt=0, writecnt=0;
-    UINT64 microsecs=0, millisecs=0;
+    int fdin, fdout, bytesRead=0, bytesWritten=0, bytesLeft, i, j, iter, pixel, readcnt=0, writecnt=0;
     FLOAT temp, fstart, fnow;
     struct timespec start, now;
 
@@ -145,6 +144,8 @@ int main(int argc, char *argv[])
     fnow = (FLOAT)now.tv_sec  + (FLOAT)now.tv_nsec / 1000000000.0;
     printf("\nstart test at %lf\n", fnow-fstart);
 
+    clock_gettime(CLOCK_MONOTONIC, &start); 
+    fstart = (FLOAT)start.tv_sec + (FLOAT)start.tv_nsec / 1000000000.0;
     for(iter=0; iter < ITERATIONS; iter++)
     {
         // Skip first and last row, no neighbors to convolve with
@@ -202,9 +203,9 @@ int main(int argc, char *argv[])
 
     clock_gettime(CLOCK_MONOTONIC, &now);
     fnow = (FLOAT)now.tv_sec  + (FLOAT)now.tv_nsec / 1000000000.0;
-    printf("stop test at %lf for %d frames\n\n", fnow-fstart, ITERATIONS);
+    printf("stop test at %lf for %d frames, fps=%lf, pps=%lf\n\n", fnow-fstart, ITERATIONS, ITERATIONS/(fnow-fstart), ((double)ITERATIONS*(double)IMG_HEIGHT*(double)IMG_WIDTH)/((double)(fnow-fstart)));
 
-    rc=write(fdout, (void *)header, HEADER_SIZE-1);
+    if(write(fdout, (void *)header, HEADER_SIZE-1) < 0) perror("write header");
 
 #ifdef FAST_IO
 

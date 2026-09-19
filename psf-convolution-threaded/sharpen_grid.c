@@ -14,8 +14,8 @@
 // This could be simplified into horizontal slices (rows) of the 1D (or 2D version) of the image array.
 //
 
-#define IMG_HEIGHT (3000)
-#define IMG_WIDTH (4000)
+#define IMG_HEIGHT (960)
+#define IMG_WIDTH (1280)
 
 //#define IMG_HEIGHT (300)
 //#define IMG_WIDTH (400)
@@ -66,7 +66,7 @@
 
 #define HEADER_SIZE (40)
 
-#define SHARPEN_GRID_ITERATIONS (900)  // Number of times threads are created to process one image
+#define SHARPEN_GRID_ITERATIONS (90)  // Number of times threads are created to process one image
 
 #define FAST_IO
 
@@ -118,7 +118,6 @@ void *sharpen_thread(void *threadptr)
     threadArgsType thargs=*((threadArgsType *)threadptr);
     int i=thargs.i;
     int j=thargs.j;
-    int repeat=0;
     FLOAT temp=0;
 
     //printf("i=%d, j=%d, h=%d, w=%d, iter=%d\n", thargs.i, thargs.j, thargs.h, thargs.w, thargs.iterations);
@@ -178,9 +177,8 @@ void *sharpen_thread(void *threadptr)
 int main(int argc, char *argv[])
 {
     int fdin, fdout, bytesRead=0, bytesWritten=0, bytesLeft, i, j, idx, jdx, pixel, readcnt, writecnt;
-    UINT64 microsecs=0, millisecs=0;
     unsigned int thread_idx;
-    FLOAT temp, fnow, fstart;
+    FLOAT fnow, fstart;
     int runs=0, rc;
     struct timespec now, start;
 
@@ -311,30 +309,30 @@ int main(int argc, char *argv[])
             // students.
             
 #if (NUM_ROW_THREADS == 3) && (NUM_COL_THREADS == 4)
-            if(thread_idx == 0) {idx=1; jdx=1;}
-            if(thread_idx == 1) {idx=1; jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 2) {idx=1; jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 3) {idx=1; jdx=(thread_idx*(IMG_W_SLICE-1));}
+            // Corrected tile indexing
+            // thread_idx is a linear index 0..11; convert to (row, col) grid position
+            // Row 0 starts at 1 to leave the top border unprocessed (no neighbors)
+            {
+                int row_of_grid = thread_idx / NUM_COL_THREADS;   // 0, 1, 2
+                int col_of_grid = thread_idx % NUM_COL_THREADS;   // 0, 1, 2, 3
 
-            if(thread_idx == 4) {idx=IMG_H_SLICE; jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 5) {idx=IMG_H_SLICE; jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 6) {idx=IMG_H_SLICE; jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 7) {idx=IMG_H_SLICE; jdx=(thread_idx*(IMG_W_SLICE-1));}
+                idx = (row_of_grid == 0) ? 1 : (row_of_grid * IMG_H_SLICE);
+                jdx = (col_of_grid == 0) ? 1 : (col_of_grid * IMG_W_SLICE);
 
-            if(thread_idx == 8) {idx=(2*(IMG_H_SLICE-1)); jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 9) {idx=(2*(IMG_H_SLICE-1)); jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 10) {idx=(2*(IMG_H_SLICE-1)); jdx=(thread_idx*(IMG_W_SLICE-1));}
-            if(thread_idx == 11) {idx=(2*(IMG_H_SLICE-1)); jdx=(thread_idx*(IMG_W_SLICE-1));}
+                threadarg[thread_idx].i = idx;
+                threadarg[thread_idx].j = jdx;
+
+                // Last row/column tile stops one pixel short of the image edge
+                threadarg[thread_idx].h = (row_of_grid == 0)
+                        ? (IMG_H_SLICE - 1)
+                        : ((row_of_grid == NUM_ROW_THREADS-1) ? (IMG_H_SLICE - 1) : IMG_H_SLICE);
+                threadarg[thread_idx].w = (col_of_grid == 0)
+                        ? (IMG_W_SLICE - 1)
+                        : ((col_of_grid == NUM_COL_THREADS-1) ? (IMG_W_SLICE - 1) : IMG_W_SLICE);
+            }
 #else
 #error "Code must be re-written for thread indexing into array for thread 4:3 thread gridding and 12 threads"
 #endif
-
-            //printf("idx=%d, jdx=%d\n", idx, jdx);
-
-            threadarg[thread_idx].i=idx;      
-            threadarg[thread_idx].h=IMG_H_SLICE-1;        
-            threadarg[thread_idx].j=jdx;        
-            threadarg[thread_idx].w=IMG_W_SLICE-1;
 
             //threadarg[thread_idx].iterations=THREAD_ITERATIONS;
 

@@ -1,10 +1,3 @@
-// Updated for CSCI 551 to iterate through equivalent of a large image with many macro-blocks
-//
-// E.g. 1280x960 image with 160x120 8x8 marco blocks
-//
-// To demonstrate scaling well, assume this is run at least 90 times for equivalent of 3 seconds processing
-// 30 frames per second.
-//
 // DCT and IDCT - listing 1
 // Copyright (c) 2001 Emil Mikulic.
 // http://unix4lyfe.org/dct/
@@ -97,7 +90,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include <time.h>
 
 // As documented for DCT2 in Wikipedia
 //
@@ -124,34 +117,38 @@
 void dct(double macroblock[8][8], double dct2[8][8])
 {
    int u,v,x,y;
-   //FILE * fp = fopen("dct2.csv", "w");
-	
+#ifdef TRACE_CSV
+   FILE * fp = fopen("dct2.csv", "w");
+#endif
+
     for (v=0; v<8; v++)
     {
         for (u=0; u<8; u++)
         {
             double Cu, Cv, z = 0.0;
-
             COEFFS(Cu,Cv,u,v);
 
             for (y=0; y<8; y++)
             for (x=0; x<8; x++)
             {
                 double s, q;
-
                 s = macroblock[x][y];
-
-                q = s * cos((double)(2*x+1) * (double)u * M_PI/16.0) *
-                        cos((double)(2*y+1) * (double)v * M_PI/16.0);
+                q = s * cos((double)(2*x+1) * (double)u * M_PI/16.0) * cos((double)(2*y+1) * (double)v * M_PI/16.0);
                 z += q;
             }
 
             dct2[v][u] = 0.25 * Cu * Cv * z;
-            //fprintf(fp, "\n %lf", dct2[v][u]);
+#ifdef TRACE_CSV
+            fprintf(fp, "\n %lf", dct2[v][u]);
+#endif
         }
-        //fprintf(fp, "\n");
-
+#ifdef TRACE_CSV
+        fprintf(fp, "\n");
+#endif
     }
+#ifdef TRACE_CSV
+    fclose(fp);
+#endif
 }
 
 
@@ -160,7 +157,9 @@ void dct(double macroblock[8][8], double dct2[8][8])
 void idct(double dct2[8][8], double idct2[8][8])
 {
     int u,v,x,y;
-    //FILE * fp = fopen("idct2.csv", "w");
+#ifdef TRACE_CSV
+    FILE * fp = fopen("idct2.csv", "w");
+#endif
 
     for (y=0; y<8; y++)
     {
@@ -173,22 +172,28 @@ void idct(double dct2[8][8], double idct2[8][8])
             {
                 double S, q;
                 double Cu, Cv;
-		
+
                 COEFFS(Cu,Cv,u,v);
                 S = dct2[v][u];
 
-                q = Cu * Cv * S *
-                    cos((double)(2*x+1) * (double)u * M_PI/16.0) *
-                    cos((double)(2*y+1) * (double)v * M_PI/16.0);
+                q = Cu * Cv * S * cos((double)(2*x+1) * (double)u * M_PI/16.0) * cos((double)(2*y+1) * (double)v * M_PI/16.0);
 
-                    z += q;
+                z += q;
             }
+
             z /= 4.0;
             idct2[x][y] = z;
-            //fprintf(fp, "\n %lf", idct2[x][y]);
+#ifdef TRACE_CSV
+            fprintf(fp, "\n %lf", idct2[x][y]);
+#endif
         }
-        //fprintf(fp, "\n");
+#ifdef TRACE_CSV
+        fprintf(fp, "\n");
+#endif
     }
+#ifdef TRACE_CSV
+    fclose(fp);
+#endif
 }
 
 
@@ -203,14 +208,8 @@ void idct(double dct2[8][8], double idct2[8][8])
 //
 // This formulation is however much easier to understand.
 //
-// Updated to emulate N frames of 1280x960 resolution with a hard-coded test macro-block - in reality we would
-// want to get data from a camera or from a file source with unique macroblock data for each image block index.
-//
-// E.g. Since video is most often 30 Hz, or 30 frames/sec, 30 iterations is therefor like 1 second of video.
-//      Adjust the iterations as is reasonable for your system!
-//
-#define MAX_ITERATIONS (3)
 
+#define ITERATIONS 19200 // 1280x960/(8x8) = 19200 macroblocks per frame
 int main()
 {
     double Macroblock[8][8] = { {101, 100,  94, 102,  97,  91,  88,  83},
@@ -224,27 +223,28 @@ int main()
     double dct2[8][8];
     double idct2[8][8];
 
+    struct timespec start, stop;
+    double elapsed, fps;
+    int i;
 
-    for(int frame_idx=0; frame_idx < MAX_ITERATIONS; frame_idx++)
+    clock_gettime(CLOCK_MONOTONIC, &start);
+
+    for (i = 0; i < ITERATIONS; i++)
     {
-        // Emulate a 1280x960 resolutioon image with one color channel - gray
-        for(int block_col_idx=0; block_col_idx < 160; block_col_idx++)
-        {
-            for(int block_row_idx=0; block_row_idx < 120; block_row_idx++)
-            {
-                // The DCT is used for image encoding (compression)
-                dct(Macroblock, dct2);
-
-
-                // Many other steps would be here for compression formats like JPEG,
-                // but the DCT is an important first step
-
-
-                // The inverse DCT is used for image decoding (decompression)
-                idct(dct2, idct2);
-            }
-        }
+        dct(Macroblock, dct2);
+        idct(dct2, idct2);
     }
+
+    clock_gettime(CLOCK_MONOTONIC, &stop);
+
+    elapsed = (double)(stop.tv_sec - start.tv_sec) + (double)(stop.tv_nsec - start.tv_nsec) / 1.0e9;
+    fps = 1.0 / elapsed;
+
+    printf("Iterations (macroblocks): %d\n", ITERATIONS);
+    printf("Elapsed time for 1 frame: %.6lf sec\n", elapsed);
+    printf("Frame rate: %.3lf fps\n", fps);
+    printf("Verify dct2[0][0] = %.4lf (expect 695.25)\n", dct2[0][0]);
+    printf("Verify idct2[0][0] = %.4lf (expect 101.00)\n", idct2[0][0]);
 
     exit(0);
 }

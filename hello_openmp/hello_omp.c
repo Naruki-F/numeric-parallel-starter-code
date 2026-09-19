@@ -16,7 +16,8 @@ int main(int argc, char *argv[])
     }
 
 #pragma omp parallel num_threads(thread_count)
-    Hello_thread();
+    for (int i = 0; i < 4; i++)
+        Hello_thread();
 
     return 0;
 }

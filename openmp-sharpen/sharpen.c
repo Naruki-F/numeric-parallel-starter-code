@@ -60,11 +60,13 @@ FLOAT PSF[9] = {-K/F, -K/F, -K/F, -K/F, K+1.0, -K/F, -K/F, -K/F, -K/F};
 
 int main(int argc, char *argv[])
 {
-    int fdin, fdout, bytesRead=0, bytesWritten=0, bytesLeft, i, j, iter, rc, pixel, readcnt=0, writecnt=0;
-    UINT64 microsecs=0, millisecs=0;
+    int fdin, fdout, bytesRead=0, bytesWritten=0, bytesLeft, i, j, iter, pixel, readcnt=0, writecnt=0;
     FLOAT temp, fstart, fnow;
     struct timespec start, now;
-    int thread_count=16;
+    int thread_count = 12;
+    
+    if (argc >= 4)
+    sscanf(argv[3], "%d", &thread_count);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
     fstart = (FLOAT)start.tv_sec  + (FLOAT)start.tv_nsec / 1000000000.0;
@@ -154,7 +156,7 @@ int main(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start);
     fstart = (FLOAT)start.tv_sec  + (FLOAT)start.tv_nsec / 1000000000.0;
 
-#pragma omp parallel for num_threads(thread_count)
+#pragma omp parallel for num_threads(thread_count) private(i, j, temp)
     for(iter=0; iter < ITERATIONS; iter++)
     {
         // Skip first and last row, no neighbors to convolve with
@@ -215,7 +217,7 @@ int main(int argc, char *argv[])
     //printf("stop test at %lf for %d frames, fps=%lf\n\n", fnow-fstart, ITERATIONS, ITERATIONS/(fnow-fstart));
     printf("stop test at %lf for %d frames, fps=%lf, pps=%lf\n\n", fnow-fstart, ITERATIONS, ITERATIONS/(fnow-fstart), ((double)ITERATIONS*(double)IMG_HEIGHT*(double)IMG_WIDTH)/((double)(fnow-fstart)));
 
-    rc=write(fdout, (void *)header, HEADER_LENGTH-1);
+    if(write(fdout, (void *)header, HEADER_LENGTH-1) < 0) perror("write header");
 
 #ifdef FAST_IO
 
