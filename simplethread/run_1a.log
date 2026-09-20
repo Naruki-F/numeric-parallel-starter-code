@@ -1,30 +1,30 @@
 --- run 1
-Thread idx=1 on CPU 1: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
-Thread idx=2 on CPU 1: sum[1...300]=45150, n(n+1)/2=45150 -> PASS
-Thread idx=3 on CPU 1: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
-Thread idx=4 on CPU 1: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
 Thread idx=0 on CPU 0: sum[1...100]=5050, n(n+1)/2=5050 -> PASS
-Thread idx=5 on CPU 1: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
-Thread idx=6 on CPU 1: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
-Thread idx=7 on CPU 1: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
+Thread idx=2 on CPU 3: sum[1...300]=45150, n(n+1)/2=45150 -> PASS
+Thread idx=1 on CPU 3: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
+Thread idx=4 on CPU 0: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
+Thread idx=5 on CPU 3: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
+Thread idx=6 on CPU 0: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
+Thread idx=7 on CPU 3: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
+Thread idx=3 on CPU 2: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
 TEST COMPLETE
 --- run 2
 Thread idx=0 on CPU 0: sum[1...100]=5050, n(n+1)/2=5050 -> PASS
-Thread idx=3 on CPU 0: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
-Thread idx=4 on CPU 0: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
-Thread idx=5 on CPU 0: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
-Thread idx=6 on CPU 0: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
-Thread idx=1 on CPU 1: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
 Thread idx=2 on CPU 1: sum[1...300]=45150, n(n+1)/2=45150 -> PASS
-Thread idx=7 on CPU 0: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
+Thread idx=1 on CPU 1: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
+Thread idx=4 on CPU 2: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
+Thread idx=5 on CPU 1: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
+Thread idx=6 on CPU 2: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
+Thread idx=7 on CPU 1: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
+Thread idx=3 on CPU 3: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
 TEST COMPLETE
 --- run 3
-Thread idx=0 on CPU 0: sum[1...100]=5050, n(n+1)/2=5050 -> PASS
-Thread idx=3 on CPU 0: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
-Thread idx=4 on CPU 0: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
-Thread idx=5 on CPU 0: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
-Thread idx=6 on CPU 0: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
-Thread idx=7 on CPU 0: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
-Thread idx=1 on CPU 1: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
+Thread idx=0 on CPU 2: sum[1...100]=5050, n(n+1)/2=5050 -> PASS
 Thread idx=2 on CPU 1: sum[1...300]=45150, n(n+1)/2=45150 -> PASS
+Thread idx=1 on CPU 1: sum[1...200]=20100, n(n+1)/2=20100 -> PASS
+Thread idx=3 on CPU 2: sum[1...400]=80200, n(n+1)/2=80200 -> PASS
+Thread idx=4 on CPU 0: sum[1...500]=125250, n(n+1)/2=125250 -> PASS
+Thread idx=5 on CPU 1: sum[1...600]=180300, n(n+1)/2=180300 -> PASS
+Thread idx=6 on CPU 0: sum[1...700]=245350, n(n+1)/2=245350 -> PASS
+Thread idx=7 on CPU 1: sum[1...800]=320400, n(n+1)/2=320400 -> PASS
 TEST COMPLETE
