@@ -1,13 +1,18 @@
+#define _GNU_SOURCE 
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sched.h>
 
-#define NUM_THREADS 10
+#define NUM_THREADS 8
+#define RANGE_STEP  100 // n = (idx+1) * 100
 
 typedef struct
 {
-    int threadIdx;
+    int  threadIdx;
+    int  n; // total limit  1..n
+    long sum;
+    long expected; // n(n+1)/2
 } threadParams_t;
 
 
@@ -19,15 +24,17 @@ threadParams_t threadParams[NUM_THREADS];
 
 void *counterThread(void *threadp)
 {
-    int sum=0, i;
-    threadParams_t *threadParams = (threadParams_t *)threadp;
+    long sum=0;
+    int i;
+    threadParams_t *p = (threadParams_t *)threadp;
 
-    for(i=1; i < (threadParams->threadIdx)+1; i++)
+    for(i = 1; i <= p->n; i++)
         sum=sum+i;
+    
+    p->sum = sum;
+    p->expected = ((long)p->n * (p->n + 1)) / 2;
  
-    printf("Thread idx=%d, sum[0...%d]=%d\n", 
-           threadParams->threadIdx,
-           threadParams->threadIdx, sum);
+    printf("Thread idx=%d on CPU %d: sum[1...%d]=%ld, n(n+1)/2=%ld -> %s\n", p->threadIdx, sched_getcpu(), p->n, p->sum, p->expected, (p->sum == p->expected) ? "PASS" : "FAIL");
 
     return((void *)0);
 }
@@ -40,6 +47,7 @@ int main (int argc, char *argv[])
    for(i=0; i < NUM_THREADS; i++)
    {
        threadParams[i].threadIdx=i;
+       threadParams[i].n = (i + 1) * RANGE_STEP; // 100, 200,..., 800
 
        pthread_create(&threads[i],   // pointer to thread descriptor
                       (void *)0,     // use default attributes
